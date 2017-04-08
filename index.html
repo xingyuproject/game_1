@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>pixi.js Tutorial 1 - 1</title>
+    <script src="assets/js/game1.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/pixi.min.js"></script>
+</head>
+<body>
+<script>
+var game_time_1 = 0;
+var game_time_2 = 0;
+var players = new Array();
+
+var render_w=700;
+var render_h=700;
+
+if (window.innerWidth)
+render_w = window.innerWidth;
+else if ((document.body) && (document.body.clientWidth))
+render_w = document.body.clientWidth;
+// 获取窗口高度
+if (window.innerHeight)
+render_h = window.innerHeight;
+else if ((document.body) && (document.body.clientHeight))
+render_h = document.body.clientHeight;
+
+
+
+var stage = new PIXI.Stage(0x333333);
+
+var renderer = PIXI.autoDetectRenderer(render_w, render_h);
+
+document.body.appendChild(renderer.view);
+var texture = PIXI.Texture.fromImage("img/home1.png");
+
+var bunny = new PIXI.Sprite(texture);
+
+
+//鼠标中心
+bunny.anchor.x = .5;
+bunny.anchor.y = .5;
+
+bunny.position.x = 100;
+bunny.position.y = 100;
+
+
+
+
+stage.addChild(bunny);
+
+requestAnimFrame( animate );
+requestAnimationFrame(animate2);
+
+
+//单位类
+function player(){
+
+this.pl = new Object;
+var pl_img = PIXI.Texture.fromImage("img/player1.png");
+var pl_sprite    = new PIXI.Sprite(pl_img);
+
+pl_sprite.anchor.x = .5;
+pl_sprite.anchor.y = .5;
+pl_sprite.position.x = Math.round(Math.random()*render_w);
+pl_sprite.position.y = Math.round(Math.random()*render_h);
+this.speed = Math.round(Math.random()*13)*0.1;
+this.direction = Math.round(Math.random()*3+1);
+console.log(" di: ",this.direction);
+this.pic_width = 25;
+this.obj = pl_sprite;
+this.hited = false;
+//休息时间
+this.start_stop=false;
+this.stoptime=0;
+this.max_stoptime=Math.round(Math.random()*100)+200;
+//状态切换时间
+this.state_change_time=Math.round(Math.random()*500)+200;
+this.max_change_time = this.state_change_time;
+//切换方向
+this.change_direct = function(){
+	console.log("改变了方向");
+	change_direct(this);//改变方向	
+}
+//移动
+this.move= function(){
+
+	if(this.state_change_time >= 0)
+	{
+		this.state_change_time--;//状态切换计时间
+		//console.log("状态切换剩余",this.state_change_time);
+		if (this.state_change_time <0)
+		{
+			this.stoptime = this.max_stoptime;
+			//console.log("开始休息");
+		}
+		else
+			move(this.obj,this.speed,this.direction);//移动方法
+	}
+	if(this.stoptime >=0){
+		this.stoptime--;
+		//console.log("休息倒计时",this.stoptime);
+		if(this.stoptime < 0){
+			this.stoptime = -1;
+			this.state_change_time = this.max_change_time;
+			//console.log("结束休息");
+			this.change_direct();
+		}
+	}
+
+}
+//碰撞检测
+this.hit_check = function(){
+	
+	return hit_check(this);//碰撞检测方法
+}
+
+this.interactive = true;
+players.push(this);
+stage.addChild(pl_sprite);
+return this;
+}
+//画布，单位渲染
+function animate() {
+    renderer.render(stage);
+    requestAnimFrame( animate );
+}
+//逻辑执行
+function animate2() {
+	game_time_1++; 
+	if(game_time_1 > 500)
+	{ 
+		game_time_2++;
+		game_time_1 =0;
+		have_event();
+	}
+	requestAnimationFrame(animate2);
+
+	for(var i=0;i<players.length;i++)
+	{
+		
+		if( players[i].hit_check() )
+		{
+			//console.log("hited");
+			//players[i].hited = true;
+			players[i].change_direct();
+			//console.log('hit_check:'+i);
+			//console.log('hit_check:'+i);
+		}
+		else
+		{
+			players[i].move();
+		}
+		
+	}
+	
+}
+function have_event(){
+	var event_num = Math.round(Math.random()*5)+1;
+	event_num = 1;
+	switch(event_num)
+	{
+		case 1:
+			var p1 = new player();
+		break;
+	}
+	
+}
+function abs(a)
+{
+	if(a >0)
+		return a;
+	else if(a < 0)
+		return a*(-1);
+	else return 0;
+}
+//角色碰撞判断
+function hit_check(pobj)
+{
+	if( pobj.obj.position.x - pobj.pic_width < 0) 
+	{
+		pobj.obj.position.x = pobj.pic_width+1;
+		return true;
+	}
+	else if( pobj.obj.position.x +pobj.pic_width >render_w)
+	{
+		pobj.obj.position.x = render_w -pobj.pic_width-1;
+		return true;
+	}
+
+	if(pobj.obj.position.y - pobj.pic_width < 0) 
+	{
+		pobj.obj.position.y = pobj.pic_width +1;
+		return true;
+	}
+	else if(pobj.obj.position.y + pobj.pic_width > render_h )
+	{
+		pobj.obj.position.y = render_h - pobj.pic_width-1;
+		return true;
+	}
+	return false;
+}
+
+//移动角色
+function move(object,speed,direction)
+{
+	switch(direction)
+	{
+	case 1:	
+		object.position.y -= speed;
+		break;
+	case 2:	
+		object.position.y += speed;
+		break;
+	case 3:	
+		object.position.x -= speed;
+		break;
+	case 4:	
+		object.position.x += speed;
+		break;
+	}	
+}
+//切换方向
+function change_direct(object){
+	object.direction +=1;
+	if (object.direction>4)
+		object.direction =1;
+
+	console.log("di:  ",object.direction);
+	object.hited = false;
+}
+
+//创建角色
+var p1 = new player();
+		
+		bunny.interactive = true
+		
+
+		//bunny.click = stage.tap = function(data){
+		//	console.log('点击了我');
+		//}
+
+		bunny.mousedown = bunny.touchstart =function(data){
+			// stop the default event...
+			//data.originalEvent.preventDefault();
+			this.data = data;
+			this.alpha = 0.5;
+			this.dragging = true;
+		}
+
+		bunny.mouseup = bunny.mouseupoutside = bunny.touchend = function(data){
+	                this.data = data;
+			this.alpha = 1
+			this.dragging = false;
+			// set the interaction data to null
+			
+			this.data = data;
+			var newPosition = renderer.plugins.interaction.mouse.global;
+			//console.log('x:',newPosition.x,'y:',newPosition.y);
+			this.position.x = newPosition.x;
+			this.position.y = newPosition.y;
+		};
+
+		bunny.mousemove = bunny.touchmove = function(data){
+			if(this.dragging){
+				var newPosition = renderer.plugins.interaction.mouse.global;
+				this.position.x = newPosition.x;
+				this.position.y = newPosition.y;
+				renderer.render(stage);
+			}
+		}
+
+		
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
